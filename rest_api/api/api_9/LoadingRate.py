@@ -6,10 +6,12 @@ from ..utils import get_logger
 from ..GlobalParam import *
 from config import *
 import traceback
+
 logger = get_logger("LoadingRate")
 
+
 class LoadingRateWarning(APIView):
-    def get(self,request):
+    def get(self, request):
         start_time = request.GET.get('startTime')
         end_time = request.GET.get('endTime')
         if not start_time:
@@ -31,10 +33,10 @@ class LoadingRateWarning(APIView):
                         d_time > '{}' 
                         AND d_time <= '{}' 
                     ORDER BY
-                        d_time DESC;""".format(start_time,end_time)
+                        d_time DESC;""".format(start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-            print(sql,2222)
+            print(sql, 2222)
             data_list = [list(row) for row in rows]
             json_list = []
             for item in data_list:
@@ -50,23 +52,22 @@ class LoadingRateWarning(APIView):
             return Response(RESULT)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({'code':'-100','ret':ERROR_MSG.get('-100')})
-
+            return Response({'code': '-100', 'ret': ERROR_MSG.get('-100')})
 
 
 class LoadingRate(APIView):
     # 默认1天数据，截止日期参数选填
-    def get(self,request):
+    def get(self, request):
         deadline = request.GET.get("deadline")
         if deadline is "" or deadline is None:
             deadline = NOW_DATE_TIME
         try:
-            str_to_date = datetime.datetime.strptime(deadline,"%Y-%m-%d %H:%M:%S")
+            str_to_date = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
             day_date_time = (str_to_date + datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -78,10 +79,10 @@ class LoadingRate(APIView):
                         loading_rate 
                     WHERE
                         d_time > "{}" 
-                        AND d_time <= "{}";""".format(day_date_time,deadline)
+                        AND d_time <= "{}";""".format(day_date_time, deadline)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-            print(sql,'***********',len(rows))
+            print(sql, '***********', len(rows))
             data_list = [list(row) for row in rows]
             json_list = []
             for item in data_list:
@@ -92,7 +93,7 @@ class LoadingRate(APIView):
                         targe[item[0]] = item[1]
                         flag = 1
                         break
-                if flag == 0: 
+                if flag == 0:
                     data_dict = {}
                     data_dict['date'] = item[2]
                     data_dict[item[0]] = item[1]
@@ -101,21 +102,21 @@ class LoadingRate(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
     # 返回接收各个ip的数据   默认返回7天的数据
     def post(self, request):
         # 接收参数"1.9100或2.9100"
         ip = request.data.get("ip")
-        start_time = request.data.get("startTime",WEEK_DATE_TIME)
-        end_time = request.data.get("endTime",NOW_DATE_TIME) 
+        start_time = request.data.get("startTime", WEEK_DATE_TIME)
+        end_time = request.data.get("endTime", NOW_DATE_TIME)
         if ip is None:
-            return Response({"code":"400","ret":ERROR_MSG.get("400")})
+            return Response({"code": "400", "ret": ERROR_MSG.get("400")})
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -129,10 +130,10 @@ class LoadingRate(APIView):
                         instance LIKE '%{}' 
                     AND
                         d_time > "{}" 
-                        AND d_time <= "{}";""".format(ip,start_time,end_time)
+                        AND d_time <= "{}";""".format(ip, start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-            print(sql,'*****************',len(rows))
+            print(sql, '*****************', len(rows))
             data_list = []
             for j in rows:
                 data_dict = {}
@@ -143,4 +144,4 @@ class LoadingRate(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})

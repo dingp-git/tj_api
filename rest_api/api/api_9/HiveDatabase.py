@@ -6,7 +6,9 @@ from ..utils import get_logger
 from ..GlobalParam import *
 from config import *
 import traceback
+
 logger = get_logger("HiveDatabase")
+
 
 # 整理数据格式
 def format_data(rows):
@@ -22,6 +24,7 @@ def format_data(rows):
         else:
             data_dict[item[0]].append(value_dict)
     return data_dict
+
 
 # 获取数据库/表 多组数据
 def get_multip_data(start_time, end_time, multip_name):
@@ -45,6 +48,7 @@ def get_multip_data(start_time, end_time, multip_name):
     data_dict = format_data(rows)
     RESULT["message"] = data_dict
     return RESULT
+
 
 # 获取数据库/表 单组数据
 def get_single_data(start_time, end_time, single_name):
@@ -78,7 +82,7 @@ class MultipltData(APIView):
         if not end_time:
             end_time = NOW_DATE_TIME
         if multip_name is None:
-            return Response({"code":"400","ret":ERROR_MSG.get("400")})
+            return Response({"code": "400", "ret": ERROR_MSG.get("400")})
         try:
             result = get_multip_data(start_time, end_time, multip_name)
             return Response(result)
@@ -107,7 +111,7 @@ class SingleData(APIView):
 
 # 告警信息
 class DatabaseWarning(APIView):
-    def get(self,request):
+    def get(self, request):
         start_time = request.GET.get('startTime')
         end_time = request.GET.get('endTime')
         if not start_time:
@@ -128,7 +132,7 @@ class DatabaseWarning(APIView):
                         d_time > '{}' 
                         AND d_time <= '{}'
                     ORDER BY
-                        d_time DESC;""".format(start_time,end_time)
+                        d_time DESC;""".format(start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
             # print(sql,1111111)
@@ -146,8 +150,7 @@ class DatabaseWarning(APIView):
             return Response(RESULT)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
-
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
 
 # TODO DEL
@@ -217,7 +220,7 @@ class HiveDatabase(APIView):
             str_to_date = datetime.datetime.strptime(
                 deadline, "%Y-%m-%d %H:%M:%S")
             day_date_time = (
-                str_to_date + datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
+                    str_to_date + datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
             result = {
                 "code": "0",
                 "ret": ERROR_MSG.get("0"),

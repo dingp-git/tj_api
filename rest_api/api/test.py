@@ -8,8 +8,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http.response import JsonResponse
 from django.db import connections, connection
-from .utils import  get_logger
+from .utils import get_logger
+
 logger = get_logger("test")
+
 
 class test_api(APIView):
     def get(self, request):
@@ -19,8 +21,3 @@ class test_api(APIView):
             rows = cursor.fetchall()
         logger.error("maybe is bugger")
         return Response({'message': rows, 'code': '0'})
-        
-
-
-
-

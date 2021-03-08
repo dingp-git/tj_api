@@ -15,7 +15,7 @@ urlpatterns = [
     # UpDown
     # path('indexVsIsp/', api_6.IndexVsIsp.as_view()),
     path('rateVsReqrsp/', api_6.RateVsReqrsp.as_view()),
-    #CdrData
+    # CdrData
     # XL
     path('cdrCountVsCentre/', api_6.CdrCountVsCentre.as_view()),
     # 五码 
@@ -23,7 +23,7 @@ urlpatterns = [
     path('getTableData/', api_6.GetTableData.as_view()),
     # 告警
     path('getAlarmHistory/', api_6.GetAlarmHistory.as_view()),
-    path('testWebsocket/',api_6.test_websocket),
+    path('testWebsocket/', api_6.test_websocket),
 
     # 5x9
     # HiveDatabase
@@ -34,10 +34,8 @@ urlpatterns = [
     # TODO DEL
     path('totalDatabase/', api_9.TotalDatabase.as_view()),
     path('hiveDatabase/', api_9.HiveDatabase.as_view()),
-    
+
     # LoadingRate
     path('loadingRate/', api_9.LoadingRate.as_view())
 
-
 ]
-

@@ -15,11 +15,11 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-#Import project config settings
+# Import project config settings
 try:
     from config import config as CONFIG
 except ImportError:
-    
+
     msg = '''
     
     Error: No config file found.
@@ -36,10 +36,9 @@ SECRET_KEY = CONFIG.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = CONFIG.DEBUG or False
 
-
 ALLOWED_HOSTS = CONFIG.ALLOWED_HOSTS
 
-#LOG LEVEL
+# LOG LEVEL
 LOG_LEVEL = 'DEBUG' if DEBUG else CONFIG.LOG_LEVEL or 'WARNING'
 
 # Application definition
@@ -55,11 +54,11 @@ INSTALLED_APPS = [
 
 # self apps 
 MY_APPS = [
-    #'corsheaders',
+    # 'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'rest_api',
-    
+
 ]
 INSTALLED_APPS += MY_APPS
 
@@ -67,7 +66,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -93,7 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tianjin.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
@@ -101,8 +99,6 @@ DATABASES = {
     'default': CONFIG.MYDB.get('local'),
     'tianjin': CONFIG.MYDB.get('tianjin_1'),
 }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -122,7 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
@@ -133,7 +128,6 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_TZ = False
 
 DEFAULT_CHARSET = 'utf-8'
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
@@ -150,7 +144,7 @@ LOGGING = {
         # 冗长的日志格式
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-        },  
+        },
         'main': {
             'datefmt': '%Y-%m-%d %H:%M:%S',
             'format': '%(asctime)s [%(module)s %(levelname)s] %(message)s',
@@ -171,7 +165,7 @@ LOGGING = {
             'formatter': 'main'
         },
         'file': {
-            'level': 'DEBUG', # error
+            'level': 'DEBUG',  # error
             'class': 'logging.FileHandler',
             'formatter': 'main',
             'filename': os.path.join(CONFIG.LOG_DIR, 'Tianjin.log')
@@ -230,5 +224,3 @@ LOGGING = {
 
     }
 }
-
-

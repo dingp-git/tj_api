@@ -2,24 +2,25 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http.response import JsonResponse
 from django.db import connections, connection
-from ..utils import  get_logger
+from ..utils import get_logger
 from ..GlobalParam import *
 from config import *
 import traceback
 
 logger = get_logger("CdrData")
 
+
 # XL
 class CdrCountVsCentre(APIView):
     # 无参数，查询cdr_count列数据，仅有长安数据
-    def get(self,request):
+    def get(self, request):
         # 接口测试数据
         FORMATE_NOW_DATE = 20201101
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -35,7 +36,7 @@ class CdrCountVsCentre(APIView):
             json_list = []
             for i in data_list:
                 json_dict = {}
-                json_dict['cdr_count'] =i[0]
+                json_dict['cdr_count'] = i[0]
                 json_dict['stat_time'] = i[1]
                 json_list.append(json_dict)
             # RESULT["message"] = json_list
@@ -45,10 +46,10 @@ class CdrCountVsCentre(APIView):
         except Exception as e:
             # logger.error(e)
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
     # 参数cdr类型，查询指定cdr类型的一天数据，若参数为空，则默认返回全部cdr类型数据
-    def post(self,request):
+    def post(self, request):
         cdr_type = request.POST.get("cdrType")
         # 接口测试数据
         FORMATE_NOW_DATE = 20201101
@@ -56,9 +57,9 @@ class CdrCountVsCentre(APIView):
         NOW_DATE_TIME = "2020-11-01 18:00:00"
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -69,17 +70,18 @@ class CdrCountVsCentre(APIView):
                         cdr_qua_stat_{} 
                 """.format(FORMATE_NOW_DATE)
                 if cdr_type:
-                    sql += " WHERE cdr_type = '{}' AND stat_time BETWEEN '{}' AND '{}';".format(cdr_type,DEC_DATE_TIME,NOW_DATE_TIME)
+                    sql += " WHERE cdr_type = '{}' AND stat_time BETWEEN '{}' AND '{}';".format(cdr_type, DEC_DATE_TIME,
+                                                                                                NOW_DATE_TIME)
                 else:
-                    sql += " WHERE stat_time BETWEEN '{}' AND '{}';".format(DEC_DATE_TIME,NOW_DATE_TIME)
+                    sql += " WHERE stat_time BETWEEN '{}' AND '{}';".format(DEC_DATE_TIME, NOW_DATE_TIME)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-            print(22222222222,sql)
+            print(22222222222, sql)
             data_list = [list(row) for row in rows]
-            json_list = []  
+            json_list = []
             for j in data_list:
                 json_dict = {}
-                json_dict['cdr_count'] =j[0]
+                json_dict['cdr_count'] = j[0]
                 json_dict['stat_time'] = j[1]
                 json_list.append(json_dict)
             result["message"] = json_list
@@ -87,14 +89,13 @@ class CdrCountVsCentre(APIView):
         except Exception as e:
             # logger.error(e)
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
-
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
 
 # 五码
 class CodeVsCentre(APIView):
     # 默认1小时数据，截止日期参数，指标-运营商-比值
-    def get(self,request):
+    def get(self, request):
         # 接口测试数据
         # HOUR_DATE_TIME = "2020-12-01 13:10:00"
         # NOW_DATE_TIME = "2020-12-02 06:10:00"
@@ -103,11 +104,11 @@ class CodeVsCentre(APIView):
             deadline = NOW_DATE_TIME
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
-            str_to_date = datetime.datetime.strptime(deadline,"%Y-%m-%d %H:%M:%S")
+            str_to_date = datetime.datetime.strptime(deadline, "%Y-%m-%d %H:%M:%S")
             hour_date_time = (str_to_date + datetime.timedelta(minutes=-60)).strftime("%Y-%m-%d %H:%M:%S")
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -125,37 +126,37 @@ class CodeVsCentre(APIView):
                         stat_time BETWEEN "{}" AND "{}"
                     GROUP BY
                         isp,
-                        stat_time;""".format(hour_date_time,deadline)
+                        stat_time;""".format(hour_date_time, deadline)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
             print(sql)
             data_list = [list(row) for row in rows]
             data_dict = {}
             for i in data_list:
-                data_dict.setdefault("imsi",{})[i[5]] = i[0]
-                data_dict.setdefault("user_num",{})[i[5]] = i[1]
-                data_dict.setdefault("imei",{})[i[5]] = i[2]
-                data_dict.setdefault("areacode",{})[i[5]] = i[3]
-                data_dict.setdefault("uli",{})[i[5]] = i[4]
+                data_dict.setdefault("imsi", {})[i[5]] = i[0]
+                data_dict.setdefault("user_num", {})[i[5]] = i[1]
+                data_dict.setdefault("imei", {})[i[5]] = i[2]
+                data_dict.setdefault("areacode", {})[i[5]] = i[3]
+                data_dict.setdefault("uli", {})[i[5]] = i[4]
             result["message"] = data_dict
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
-    
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
+
     # 二级弹窗 时间范围参数可选，默认7天，必填参数isp,protocol
-    def post(self,request):
-        start_time = request.data.get('startTime',WEEK_DATE_TIME)
-        end_time = request.data.get('endTime',NOW_DATE_TIME)
+    def post(self, request):
+        start_time = request.data.get('startTime', WEEK_DATE_TIME)
+        end_time = request.data.get('endTime', NOW_DATE_TIME)
         isp = request.data.get('isp')
         protocol = request.data.get('protocol')
         if isp is None or protocol is None:
-            return Response({"code":"400","ret":ERROR_MSG.get("400")})
+            return Response({"code": "400", "ret": ERROR_MSG.get("400")})
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -168,7 +169,7 @@ class CodeVsCentre(APIView):
                     WHERE stat_time BETWEEN "{1}" AND "{2}"
                     GROUP BY
                         isp,
-                        stat_time order by stat_time limit 30;""".format(protocol,start_time,end_time)
+                        stat_time order by stat_time limit 30;""".format(protocol, start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
                 print(sql)
@@ -193,7 +194,7 @@ class CodeVsCentre(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
 
 # 获取cdr_qua_stat表数据  DELETE
@@ -237,18 +238,18 @@ class GetTableData(APIView):
                     OR imei_miss_rate IS NOT NULL 
                     OR areacode_miss_rate IS NOT NULL 
                     OR uli_miss_rate IS NOT NULL)
-                    AND stat_time BETWEEN '{}' AND '{}';""".format(FORMATE_NOW_DATE,DEC_DATE_TIME,NOW_DATE_TIME)
+                    AND stat_time BETWEEN '{}' AND '{}';""".format(FORMATE_NOW_DATE, DEC_DATE_TIME, NOW_DATE_TIME)
             cursor.execute(sql)
             rows = cursor.fetchall()
-            print(sql,len(rows))
+            print(sql, len(rows))
         data_list = [list(row) for row in rows]
-        json_list = []  
+        json_list = []
         for j in data_list:
             json_dict = {}
-            json_dict['cdr类型'] =j[0]
+            json_dict['cdr类型'] = j[0]
             json_dict['网络类型'] = j[1]
             json_dict['cdr总数'] = j[2]
-            json_dict['含imsi总数'] =j[3]
+            json_dict['含imsi总数'] = j[3]
             json_dict['含user_num总数'] = j[4]
             json_dict['imsi_miss_rate'] = j[5]
             json_dict['user_miss_rate'] = j[6]
@@ -267,8 +268,8 @@ class GetTableData(APIView):
 
     def post(self, request):
         isp = request.data.get("isp")
-        start_time = request.data.get("startTime",DEC_DATE_TIME)
-        end_time = request.data.get("endTime",NOW_DATE_TIME)
+        start_time = request.data.get("startTime", DEC_DATE_TIME)
+        end_time = request.data.get("endTime", NOW_DATE_TIME)
         # 接口测试数据
         # isp = "1"
         # start_time = "2020-11-01 00:00:00"
@@ -308,21 +309,21 @@ class GetTableData(APIView):
                     OR areacode_miss_rate IS NOT NULL 
                     OR uli_miss_rate IS NOT NULL) """.format(FORMATE_NOW_DATE)
             if isp:
-                sql += "AND isp = '{}' AND stat_time BETWEEN '{}' AND '{}';".format(isp,start_time,end_time)
+                sql += "AND isp = '{}' AND stat_time BETWEEN '{}' AND '{}';".format(isp, start_time, end_time)
             else:
-                sql += "AND stat_time BETWEEN '{}' AND '{}';".format(start_time,end_time)
- 
+                sql += "AND stat_time BETWEEN '{}' AND '{}';".format(start_time, end_time)
+
             cursor.execute(sql)
             rows = cursor.fetchall()
-            print(sql,len(rows))
+            print(sql, len(rows))
         data_list = [list(row) for row in rows]
-        json_list = []  
+        json_list = []
         for j in data_list:
             json_dict = {}
-            json_dict['cdr类型'] =j[0]
+            json_dict['cdr类型'] = j[0]
             json_dict['网络类型'] = j[1]
             json_dict['cdr总数'] = j[2]
-            json_dict['含imsi总数'] =j[3]
+            json_dict['含imsi总数'] = j[3]
             json_dict['含user_num总数'] = j[4]
             json_dict['imsi_miss_rate'] = j[5]
             json_dict['user_miss_rate'] = j[6]

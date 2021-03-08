@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http.response import JsonResponse
-from django.db import connections,connection
+from django.db import connections, connection
 from ..utils import get_logger
 from ..GlobalParam import *
 import traceback
@@ -18,9 +18,9 @@ class DxFrontVsLoad(APIView):
         # NOW_DATE_TIME = "2020-12-02 15:57:10"
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -33,15 +33,15 @@ class DxFrontVsLoad(APIView):
                         ( SELECT d_time, sum( DX_1M ) AS dx FROM LOAD_DX GROUP BY d_time ) AS DX 
                     WHERE
                         SMSC.d_time = DX.d_time 
-                        AND SMSC.d_time BETWEEN '{}' AND '{}';""".format(DEC_DATE_TIME,NOW_DATE_TIME)
+                        AND SMSC.d_time BETWEEN '{}' AND '{}';""".format(DEC_DATE_TIME, NOW_DATE_TIME)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-                print(sql,'*****************',len(rows))
+                print(sql, '*****************', len(rows))
             data_list = [list(row) for row in rows]
-            json_list = []  
+            json_list = []
             for j in data_list:
                 json_dict = {}
-                json_dict['date'] =j[0]
+                json_dict['date'] = j[0]
                 json_dict['dxReceiveData'] = j[1]
                 json_dict['dxLoadData'] = j[2]
                 json_list.append(json_dict)
@@ -49,19 +49,19 @@ class DxFrontVsLoad(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
-    
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
+
     # 日期参数，查询指定范围内数据
     def post(self, request):
         start_time = request.data.get("startTime")
         end_time = request.data.get("endTime")
         if start_time is None or end_time is None:
-            return Response({"code":"400","ret":ERROR_MSG.get("400")})
+            return Response({"code": "400", "ret": ERROR_MSG.get("400")})
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -74,14 +74,14 @@ class DxFrontVsLoad(APIView):
                         ( SELECT d_time, sum( DX_1M ) AS dx FROM LOAD_DX GROUP BY d_time ) AS DX 
                     WHERE
                         SMSC.d_time = DX.d_time 
-                        AND SMSC.d_time BETWEEN '{}' AND '{}';""".format(start_time,end_time)
+                        AND SMSC.d_time BETWEEN '{}' AND '{}';""".format(start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
             data_list = [list(row) for row in rows]
-            json_list = []  
+            json_list = []
             for j in data_list:
                 json_dict = {}
-                json_dict['date'] =j[0]
+                json_dict['date'] = j[0]
                 json_dict['dxReceiveData'] = j[1]
                 json_dict['dxLoadData'] = j[2]
                 json_list.append(json_dict)
@@ -89,7 +89,7 @@ class DxFrontVsLoad(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
 
 # C信各时间段前端接收数据和后端加载数据对比
@@ -100,9 +100,9 @@ class CxFrontVsLoad(APIView):
         # NOW_DATE_TIME = "2020-12-02 17:56:10"
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -115,15 +115,15 @@ class CxFrontVsLoad(APIView):
                         ( SELECT d_time, sum( AvroCxMin ) AS cx FROM LOAD_CX GROUP BY d_time ) AS CX 
                     WHERE
                         MMS.d_time = CX.d_time 
-                        AND MMS.d_time BETWEEN '{}' AND '{}';""".format(DEC_DATE_TIME,NOW_DATE_TIME)
+                        AND MMS.d_time BETWEEN '{}' AND '{}';""".format(DEC_DATE_TIME, NOW_DATE_TIME)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-                print(sql,'*****************',len(rows))
+                print(sql, '*****************', len(rows))
             data_list = [list(row) for row in rows]
-            json_list = []  
+            json_list = []
             for j in data_list:
                 json_dict = {}
-                json_dict['date'] =j[0]
+                json_dict['date'] = j[0]
                 json_dict['cxReceiveData'] = j[1]
                 json_dict['cxLoadData'] = j[2]
                 json_list.append(json_dict)
@@ -131,21 +131,21 @@ class CxFrontVsLoad(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})
 
     def post(self, request):
         start_time = request.data.get("startTime")
         end_time = request.data.get("endTime")
         if start_time is None or end_time is None:
-            return Response({"code":"400","ret":ERROR_MSG.get("400")})
+            return Response({"code": "400", "ret": ERROR_MSG.get("400")})
         # 接口测试数据
         # start_time = "2020-10-27 17:56:10"
         # end_time = "2020-10-29 17:56:10"
         try:
             result = {
-                "code":"0",
-                "ret":ERROR_MSG.get("0"),
-                "message":[]
+                "code": "0",
+                "ret": ERROR_MSG.get("0"),
+                "message": []
             }
             with connections['tianjin'].cursor() as cursor:
                 sql = """
@@ -158,15 +158,15 @@ class CxFrontVsLoad(APIView):
                         ( SELECT d_time, sum( AvroCxMin ) AS cx FROM LOAD_CX GROUP BY d_time ) AS CX 
                     WHERE
                         MMS.d_time = CX.d_time 
-                        AND MMS.d_time BETWEEN '{}' AND '{}';""".format(start_time,end_time)
+                        AND MMS.d_time BETWEEN '{}' AND '{}';""".format(start_time, end_time)
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-                print(sql,'*****************',len(rows))
+                print(sql, '*****************', len(rows))
             data_list = [list(row) for row in rows]
-            json_list = []  
+            json_list = []
             for j in data_list:
                 json_dict = {}
-                json_dict['date'] =j[0]
+                json_dict['date'] = j[0]
                 json_dict['cxReceiveData'] = j[1]
                 json_dict['cxLoadData'] = j[2]
                 json_list.append(json_dict)
@@ -174,4 +174,4 @@ class CxFrontVsLoad(APIView):
             return Response(result)
         except Exception as e:
             logger.error(traceback.format_exc())
-            return Response({"code":"-100","ret":ERROR_MSG.get("-100")})
+            return Response({"code": "-100", "ret": ERROR_MSG.get("-100")})

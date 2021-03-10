@@ -65,9 +65,11 @@ class RateVsReqrsp(APIView):
             data.setdefault("Gn-A11", {})
             if "Gn" in data.keys() and "A11" in data.keys():
                 for i in data["Gn"].keys():
-                    data["Gn-A11"]["Gn" + i] = data["Gn"][i]
+                    # data["Gn-A11"]["Gn" + i] = data["Gn"][i]
+                    data["Gn-A11"][i] = data["Gn"][i]
                 for j in data["A11"].keys():
-                    data["Gn-A11"]["A11" + j] = data["A11"][j]
+                    # data["Gn-A11"]["A11" + j] = data["A11"][j]
+                    data["Gn-A11"][3] = data["A11"][j]
                 data.pop("Gn")
                 data.pop("A11")
             print(data)

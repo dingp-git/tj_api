@@ -35,7 +35,7 @@ from apps.utils import tools
 # 日志初始化
 if isFormalSystem:
     logger.add(LOG_CONF['LOG_FORM_PATH'] + '_{time:YYYY-MM-DD}.log', rotation='00:00',
-               retention=LOG_CONF['LOG_RETENTION'], level=LOG_CONF['LOG_LEVEL'], enqueue=True, encoding='utf8')
+                retention=LOG_CONF['LOG_RETENTION'], level=LOG_CONF['LOG_LEVEL'], enqueue=True, encoding='utf8')
 
 tools.print_logo()
 
@@ -45,8 +45,8 @@ redoc_url = (prefix_api_path + "/redoc") if isFormalSystem is False else None
 openapi_url = (prefix_api_path + "/openapi.json")
 
 app = FastAPI(docs_url=docs_url, redoc_url=redoc_url, openapi_url=openapi_url,
-              title=API_DOC_TITLE, description=API_DOC_DESC,
-              version=API_DOC_VERSION)
+                title=API_DOC_TITLE, description=API_DOC_DESC,
+                version=API_DOC_VERSION)
 
 # 跨域处理
 app.add_middleware(

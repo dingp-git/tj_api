@@ -39,4 +39,4 @@ async def get_info():
     sql1 = 'select * from t_alarm where alarm_system=%s'
     args = 'ipsy'
     ret = db.selectall(sql=sql1, param=args)
-    return comm_ret(resp={'test': ret})
+    return comm_ret(data={'test': ret})

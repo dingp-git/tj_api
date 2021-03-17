@@ -34,4 +34,4 @@ system_ipsy = APIRouter()
 
 @system_ipsy.get("/")
 async def get_info():
-    return comm_ret(resp={'test': 'test'})
+    return comm_ret(data={'test': 'test'})

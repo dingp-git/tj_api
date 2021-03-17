@@ -58,7 +58,7 @@ class MyConnectionPool(object):
                 user=config['DB_TEST_USER'],
                 passwd=config['DB_TEST_PASSWORD'],
                 db=config['DB_TEST_DBNAME'],
-                use_unicode=False,
+                use_unicode=True,
                 charset=config['DB_CHARSET']
             )
         return self.__pool.connection()

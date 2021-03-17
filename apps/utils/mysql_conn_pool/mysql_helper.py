@@ -53,11 +53,13 @@ class MySqLHelper(object):
             if param:
                 count = cursor.execute(sql, param)
             else:
+                # print(sql)
                 count = cursor.execute(sql)
             conn.commit()
             if autoclose:
                 self.close(cursor, conn)
         except Exception as e:
+            print(e)
             pass
         return cursor, conn, count
 

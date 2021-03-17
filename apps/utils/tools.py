@@ -51,7 +51,7 @@ def decimal_up_x(val, x=2):
     #                     注意此处使用 str
     #                     decimal.Decimal(float) 与 decimal.Decimal(str) 有差异
     return decimal.Decimal(str(val)).quantize(decimal.Decimal(('0.' + "0" * x)),
-                                              rounding=decimal.ROUND_HALF_UP)
+                                                rounding=decimal.ROUND_HALF_UP)
 
 
 def print_logo():

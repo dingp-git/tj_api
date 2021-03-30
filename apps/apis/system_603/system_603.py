@@ -465,13 +465,13 @@ async def get_up_down_datas(isp:str, protocol:str, start_time:Optional[str] = BE
     return comm_ret(data = result)
 
 
-@system_603.get('/five_code/new', summary = "获取所有码 所有运营商的 比率")
-async def get_five_code_new(end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/five_code/chanct/new', summary = "获取长安 五码 所有运营商的 最近一组比率")
+async def get_five_code_chanct_new(end_time:Optional[str] = NOW_DATE_TIME):
     """
         ## **param**:
             end_time:      结束时间(可选参数)    str    默认  当前时间
         ## **@return**:
-            [
+            {
                 "imsi": {
                         "1": {
                                 "value": 90.87,
@@ -480,7 +480,7 @@ async def get_five_code_new(end_time:Optional[str] = NOW_DATE_TIME):
                         ...
                         },
                 ...
-            ]
+            }
     """
     # 开始时间：end_time 减去 60分钟
     start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
@@ -501,35 +501,10 @@ async def get_five_code_new(end_time:Optional[str] = NOW_DATE_TIME):
             GROUP BY
                 isp,
                 d_time """.format(start_time, end_time)
-    # sql = """SELECT
-    #             FORMAT( SUM( imsi_count )/ SUM( cdr_count )* 100, 2 ) AS imsi,
-    #             FORMAT( SUM( user_num_count )/ SUM( cdr_count )* 100, 2 ) AS user_num,
-    #             FORMAT( SUM( imei_count )/ SUM( cdr_count )* 100, 2 ) AS imei,
-    #             FORMAT( SUM( areacode_count )/ SUM( cdr_count )* 100, 2 ) AS areacode,
-    #             FORMAT( SUM( uli_count )/ SUM( cdr_count )* 100, 2 ) AS uli,
-    #             isp,
-    #             d_time 
-    #         FROM
-    #             t_603_cdr_chanct 
-    #         WHERE
-    #             d_time BETWEEN '{}' AND '{}' 
-    #         GROUP BY
-    #             isp,
-    #             d_time """.format(start_time, end_time)
     rows = db.selectall(sql=sql)
     print(sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
-    # for item in temp_data:
-    #     temp_dict = {}
-    #     temp_dict['imsi'] = item[0]
-    #     temp_dict['user_num'] = item[1]
-    #     temp_dict['imei'] = item[2]
-    #     temp_dict['areacode'] = item[3]
-    #     temp_dict['uli'] = item[4]
-    #     temp_dict['isp'] = item[5]
-    #     temp_dict['date'] = item[6]
-    #     result.append(temp_dict)
     result = {
         "imsi":{},
         "user_num":{},
@@ -548,8 +523,8 @@ async def get_five_code_new(end_time:Optional[str] = NOW_DATE_TIME):
     return comm_ret(data = result)
 
 
-@system_603.get('/five_code/datas', summary = "获取某码中 某运营商 的比率")
-async def get_five_code_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/five_code/chanct/datas', summary = "获取长安 某码中 某运营商 的比率")
+async def get_five_code_chanct_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
     """
         ## **param**:
             code:          指标码(必传参数)      str    格式  imsi
@@ -586,6 +561,115 @@ async def get_five_code_datas(isp:str, code:str, start_time:Optional[str] = BEFO
         temp_dict = {}
         temp_dict['rate'] = round((item[0]/item[1])*100,2)
         temp_dict['date'] = item[2]
+        result.append(temp_dict)
+    return comm_ret(data = result)
+
+
+@system_603.get('/five_code/center/new', summary = "获取中心 五码 所有运营商的 最近一组比率")
+async def get_five_code_center_new(end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            end_time:      结束时间(可选参数)    str    默认  当前时间
+        ## **@return**:
+            {
+                "imsi": {
+                        "1": {
+                                "value": 90.87,
+                                "date": "2021-03-02 14:00:00"
+                            },
+                        ...
+                        },
+                ...
+            }
+    """
+    # 开始时间： end_time 减去60分钟
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
+    db = MySqLHelper()
+    sql = """SELECT
+                imsi_cmcc_rates,
+                imsi_cucc_rates,
+                imsi_ctcc_rates,
+                msisdn_cmcc_rates,
+                msisdn_cucc_rates,
+                msisdn_ctcc_rates,
+                imei_cmcc_rates,
+                imei_cucc_rates,
+                imei_ctcc_rates,
+                areacode_cmcc_rates,
+                areacode_cucc_rates,
+                areacode_ctcc_rates,
+                uli_cmcc_rates,
+                uli_cucc_rates,
+                uli_ctcc_rates,
+                d_time 
+            FROM
+                t_603_cdr_center 
+            WHERE
+                d_time BETWEEN '{}' AND '{}' """.format(start_time, end_time)
+    print(sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = {
+        "imsi":{},
+        "msisdn":{},
+        "imei":{},
+        "areacode":{},
+        "uli":{}
+    }
+    for i in temp_data:
+        flag = 0
+        for j in result.keys():
+            for k in range(1,4):
+                t1 = result[j].setdefault(str(k),{})
+                t1['value'] = i[flag]
+                t1['date'] = i[-1]
+                flag += 1
+    return comm_ret(data = result)
+
+
+@system_603.get('/five_code/center/datas', summary = "获取中心 某码中 某运营商 的比率")
+async def get_five_code_center_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            code:          指标码(必传参数)      str    格式  imsi
+            isp:           运营商(必传参数)      str    格式  1
+            start_time:    开始时间(可选参数)    str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)    str    默认  当前时间
+        ## **return**:
+            [
+                {
+                    "rate": 92.66,
+                    "date": "2021-03-01 17:00:00"
+                },
+                ...
+            ]
+    """
+    isp_desc = {
+        '1':'cmcc',
+        '2':'cucc',
+        '3':'ctcc'
+    }
+    isp = isp_desc[isp]
+    isp_code = code + '_' + isp + '_' + 'rates'
+    db = MySqLHelper()
+    sql = """SELECT
+                {},
+                d_time 
+            FROM
+                t_603_cdr_center 
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}'""".format(isp_code, start_time, end_time)
+    print(3333,sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = []
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['rate'] = item[0]
+        temp_dict['date'] = item[1]
         result.append(temp_dict)
     return comm_ret(data = result)
 

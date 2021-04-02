@@ -109,7 +109,7 @@ async def get_sms_load(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: O
 
 
 @system_603.get('/sms/datas', summary = "短信前后端数据对比")
-async def get_sms_datas(starlette: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
+async def get_sms_datas(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
         ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天

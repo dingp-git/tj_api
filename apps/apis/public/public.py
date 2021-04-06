@@ -45,11 +45,11 @@ async def get_info():
 
 def data_processing(data_list,max):
     """
-    @param:
-        data_list:  待处理的数据列表  list
-        max:        最大数据量        int
-    @return:
-        数据列表
+        @param:
+            data_list:  待处理的数据列表  list
+            max:        最大数据量        int
+        @return:
+            数据列表
     """
     new_list = []
     length = len(data_list)

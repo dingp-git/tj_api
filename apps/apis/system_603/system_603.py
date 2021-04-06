@@ -22,6 +22,7 @@
 
 # Standard library imports
 
+
 # Third party imports
 from fastapi import APIRouter, Depends
 from starlette.status import *
@@ -34,18 +35,20 @@ import time
 from loguru import logger
 from apps.apis.public.public import data_processing, NOW_DATE_TIME, BEFORE_DATE_TIME
 from typing import Optional
+from typing import Set
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 
 system_603 = APIRouter()
 
-
-@system_603.get("/sms/rcv")
+@system_603.get("/sms/rcv",summary = "短信接收数据量")
 async def get_sms_rcv(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        短信接收数据量
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 14:57:00",
@@ -54,6 +57,8 @@ async def get_sms_rcv(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Op
                 ...
             ]
     """
+    
+
     sql = """SELECT
                 d_time,
                 SUM( sjjs_1m ) 
@@ -71,14 +76,13 @@ async def get_sms_rcv(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Op
     return comm_ret(data=result)
 
 
-@system_603.get("/sms/load")
+@system_603.get("/sms/load", summary = "短信加载数据量")
 async def get_sms_load(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        短信加载数据量
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 14:57:00",
@@ -104,14 +108,13 @@ async def get_sms_load(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: O
     return comm_ret(data=result)
 
 
-@system_603.get('/sms/datas')
-async def get_sms_datas(starlette: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
+@system_603.get('/sms/datas', summary = "短信前后端数据对比")
+async def get_sms_datas(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        短信前后端数据对比
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 15:07:00",
@@ -136,14 +139,13 @@ async def get_sms_datas(starlette: Optional[str] = BEFORE_DATE_TIME, end_time: O
     return comm_ret(data=result)
 
 
-@system_603.get("/mms/rcv")
+@system_603.get("/mms/rcv", summary = "彩信接收数据量")
 async def get_mms_rcv(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        彩信接收数据量
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 14:57:00",
@@ -169,14 +171,13 @@ async def get_mms_rcv(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Op
     return comm_ret(data=result)
 
 
-@system_603.get("/mms/load")
+@system_603.get("/mms/load", summary = "彩信加载数据量")
 async def get_mms_load(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        彩信加载数据量
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 14:57:00",
@@ -202,14 +203,13 @@ async def get_mms_load(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: O
     return comm_ret(data=result)
 
 
-@system_603.get('/mms/datas')
+@system_603.get('/mms/datas',summary = "彩信前后端数据对比")
 async def get_mms_datas(start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        彩信前后端数据对比
-        @param:
+        ## **param**:
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 15:07:00",
@@ -272,14 +272,12 @@ def get_msg_data(sql: str):
     return ret
 
 
-@system_603.get('/relation/location/new')
+@system_603.get('/relation/location/new', summary = "返回所有机房 最近一组的关联率信息")
 async def get_relation_new(end_time: Optional[str] = NOW_DATE_TIME):
     """
-        返回各机房关联率信息
-        @param:
-            start_time:    开始时间(可选参数)    str    默认  当前时间前20分钟
+        ## **param**:
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "date": "2021-03-01 14:34:40",
@@ -289,6 +287,7 @@ async def get_relation_new(end_time: Optional[str] = NOW_DATE_TIME):
                 ...
             ]
     """
+    # 开始时间：end_time 减去 20分钟
     start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-20)
     db = MySqLHelper()
     sql = """SELECT
@@ -300,7 +299,7 @@ async def get_relation_new(end_time: Optional[str] = NOW_DATE_TIME):
                 t_603_relate_rate,
                 t_603_relate_rate_base
             WHERE
-                INET_NTOA( ip_addr_dec ) = ip_addr 
+                t_603_relate_rate_base.ip_addr = t_603_relate_rate.ip_addr 
                 AND d_time BETWEEN '{}' AND '{}' 
             GROUP BY
                 location """.format(start_time, end_time)
@@ -318,27 +317,26 @@ async def get_relation_new(end_time: Optional[str] = NOW_DATE_TIME):
     return comm_ret(data=result)
 
 
-@system_603.get('/relation/location/ip')
+@system_603.get('/relation/location/ip', summary = "获取某机房所有ip关联率信息")
 async def get_relation_ip(location: str, start_time: Optional[str] = BEFORE_DATE_TIME, end_time: Optional[str] = NOW_DATE_TIME):
     """
-        返回某机房各ip关联率信息
-        @param:
+        ## **param**:
+            location:      机房位置(必传参数)    str    格式  dx_ds
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-            location:      机房位置(必传参数)    str    格式  dx_ds
-        @return
-        [
-            {
-                "0.1": [
-                            {
-                                "date": "2021-03-01 15:34:17",
-                                "value": 84.39
-                            },
-                            ...
-                        ],
-                ...
-            }
-        ]
+        ## **return**:
+            [
+                {
+                    "0.1": [
+                                {
+                                    "date": "2021-03-01 15:34:17",
+                                    "value": 84.39
+                                },
+                                ...
+                            ],
+                    ...
+                }
+            ]
     """
     db = MySqLHelper()
     sql = """SELECT
@@ -349,7 +347,7 @@ async def get_relation_ip(location: str, start_time: Optional[str] = BEFORE_DATE
                 t_603_relate_rate,
                 t_603_relate_rate_base 
             WHERE
-                INET_NTOA( ip_addr_dec ) = ip_addr 
+                t_603_relate_rate.ip_addr = t_603_relate_rate_base.ip_addr 
                 AND abbr LIKE '{}_%'
                 AND d_time BETWEEN '{}' AND '{}' """.format(location, start_time, end_time)
     print(sql)
@@ -369,34 +367,24 @@ async def get_relation_ip(location: str, start_time: Optional[str] = BEFORE_DATE
     return comm_ret(data=result)
 
 
-@system_603.get('/up_down/all')
-async def get_up_down_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/up_down/new', summary = "获取所有指标 所有运营商 最近一组的上下行速率")
+async def get_up_down_new(end_time:Optional[str] = NOW_DATE_TIME):
     """
-        获取各机房中 各运营商 的上下行速率
-        @param:
-            start_time:    开始时间(可选参数)    str    默认  当前时间前一天
+        ## **param:**
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return:**
                 "Gn/A11": {
-                        "Gn1": [
-                                    {
-                                        "date": "2021-03-01 10:00:00",
-                                        "req": 0.9966,
-                                        "rsp": 1
-                                    },
-                                    ...
-                                ]
-                        "Gn2": [
-                                    {
-                                        "date": "2021-03-01 10:00:00",
-                                        "req": 0.9966,
-                                        "rsp": 1
-                                    },
-                                    ...
-                                ],
+                        "Gn1": {
+                                    "date": "2021-03-01 10:00:00",
+                                    "req": 0.9966,
+                                    "rsp": 1
+                                },
+                        ...
+                },
                 ...
-                }
     """
+    # 开始时间：end_time 减去 15分钟
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-15)
     db = MySqLHelper()
     sql = """SELECT
                 isp,
@@ -408,6 +396,7 @@ async def get_up_down_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:
                 t_603_req_rsp_match 
             WHERE
                 d_time BETWEEN '{}' AND '{}' """.format(start_time, end_time)
+    print(sql)
     rows = db.selectall(sql=sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
@@ -420,32 +409,26 @@ async def get_up_down_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:
         if not (item[1] == 'Gn' or item[1] == 'A11'):
             if item[1] not in result.keys():
                 t1 = result.setdefault(item[1],{})
-                t2 = t1.setdefault(item[0],[])
-                t2.append(temp_dict)
+                t1[item[0]] = temp_dict
             else:
                 if item[0] not in result[item[1]].keys():
-                    t3 = result[item[1]].setdefault(item[0],[])
-                    t3.append(temp_dict)
-                else:
-                    result[item[1]][item[0]].append(temp_dict)
+                    result[item[1]][item[0]] = temp_dict
         else:
             if not (item[1] == 'Gn' and item[0] == 3):
                 t4 = result.setdefault("Gn/A11",{})
-                t5 = t4.setdefault((item[1]+str(item[0])),[])
-                t5.append(temp_dict)
+                t4[(item[1]+str(item[0]))] = temp_dict
     return comm_ret(data = result)
 
 
-@system_603.get('/up_down/datas')
+@system_603.get('/up_down/datas', summary = "获取某指标中 某运营商 的上下行速率")
 async def get_up_down_datas(isp:str, protocol:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
     """
-    获取某机房中 某运营商 的上下行速率
-    @param:
+    ## **param**:
+        protocol:      指标名称(必传参数)    str    格式  MC 或 Gn/A11
         isp:           运营商(必传参数)      str    格式  1 或 Gn1
-        protocol:      机房位置(必传参数)    str    格式  MC 或 Gn/A11
         start_time:    开始时间(可选参数)    str    默认  当前时间前一天
         end_time:      结束时间(可选参数)    str    默认  当前时间
-    @return:
+    ## **return**:
         [
             {
                 "date": "2021-03-01 00:00:00",
@@ -482,28 +465,25 @@ async def get_up_down_datas(isp:str, protocol:str, start_time:Optional[str] = BE
     return comm_ret(data = result)
 
 
-@system_603.get('/five_code/all')
-async def get_five_code_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/five_code/chanct/new', summary = "获取长安 五码 所有运营商的 最近一组比率")
+async def get_five_code_chanct_new(end_time:Optional[str] = NOW_DATE_TIME):
     """
-        获取五码比率
-        @param:
-            start_time:    开始时间(可选参数)    str    默认  当前时间前一天
+        ## **param**:
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
-            [
+        ## **@return**:
+            {
                 "imsi": {
-                        "1": [
-                                {
-                                    "value": 90.87,
-                                    "date": "2021-03-02 14:00:00"
-                                },
-                                    ...
-                            ],
+                        "1": {
+                                "value": 90.87,
+                                "date": "2021-03-02 14:00:00"
+                            },
                         ...
                         },
                 ...
-            ]
+            }
     """
+    # 开始时间：end_time 减去 60分钟
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
     db = MySqLHelper()
     sql = """SELECT
                 SUM(imsi_count),
@@ -515,41 +495,16 @@ async def get_five_code_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_tim
                 isp,
                 d_time 
             FROM
-                t_603_cdr 
+                t_603_cdr_chanct 
             WHERE
                 d_time BETWEEN '{}' AND '{}' 
             GROUP BY
                 isp,
                 d_time """.format(start_time, end_time)
-    # sql = """SELECT
-    #             FORMAT( SUM( imsi_count )/ SUM( cdr_count )* 100, 2 ) AS imsi,
-    #             FORMAT( SUM( user_num_count )/ SUM( cdr_count )* 100, 2 ) AS user_num,
-    #             FORMAT( SUM( imei_count )/ SUM( cdr_count )* 100, 2 ) AS imei,
-    #             FORMAT( SUM( areacode_count )/ SUM( cdr_count )* 100, 2 ) AS areacode,
-    #             FORMAT( SUM( uli_count )/ SUM( cdr_count )* 100, 2 ) AS uli,
-    #             isp,
-    #             d_time 
-    #         FROM
-    #             t_603_cdr 
-    #         WHERE
-    #             d_time BETWEEN '{}' AND '{}' 
-    #         GROUP BY
-    #             isp,
-    #             d_time """.format(start_time, end_time)
     rows = db.selectall(sql=sql)
-    # print(sql)
+    print(sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
-    # for item in temp_data:
-    #     temp_dict = {}
-    #     temp_dict['imsi'] = item[0]
-    #     temp_dict['user_num'] = item[1]
-    #     temp_dict['imei'] = item[2]
-    #     temp_dict['areacode'] = item[3]
-    #     temp_dict['uli'] = item[4]
-    #     temp_dict['isp'] = item[5]
-    #     temp_dict['date'] = item[6]
-    #     result.append(temp_dict)
     result = {
         "imsi":{},
         "user_num":{},
@@ -557,31 +512,26 @@ async def get_five_code_all(start_time:Optional[str] = BEFORE_DATE_TIME, end_tim
         "areacode":{},
         "uli":{}
     }
-    for item in temp_data:
+    for i in temp_data:
         flag = 0
         for j in result.keys():
             temp_dict = {}
-            temp_dict['value'] = round((item[flag]/item[5])*100,2)
-            temp_dict['date'] = item[7]
+            temp_dict['value'] = round((i[flag]/i[5])*100,2)
+            temp_dict['date'] = i[7]
+            result[j][i[6]] = temp_dict
             flag += 1
-            if item[6] not in result[j].keys():
-                t1 = result[j].setdefault(item[6],[])
-                t1.append(temp_dict)
-            else:
-                result[j][item[6]].append(temp_dict)
     return comm_ret(data = result)
 
 
-@system_603.get('/five_code/datas')
-async def get_five_code_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/five_code/chanct/datas', summary = "获取长安 某码中 某运营商 的比率")
+async def get_five_code_chanct_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
     """
-        获取某码中 某运营商 的比率
-        @param:
-            isp:           运营商(必传参数)      str    格式  1
+        ## **param**:
             code:          指标码(必传参数)      str    格式  imsi
+            isp:           运营商(必传参数)      str    格式  1
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
             [
                 {
                     "rate": 92.66,
@@ -596,7 +546,7 @@ async def get_five_code_datas(isp:str, code:str, start_time:Optional[str] = BEFO
                 cdr_count,
                 d_time 
             FROM
-                t_603_cdr 
+                t_603_cdr_chanct 
             WHERE
                 d_time BETWEEN '{}' AND '{}' 
             GROUP BY
@@ -615,14 +565,122 @@ async def get_five_code_datas(isp:str, code:str, start_time:Optional[str] = BEFO
     return comm_ret(data = result)
 
 
-@system_603.get('/cdr/datas')
-async def get_cdr_datas(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_603.get('/five_code/center/new', summary = "获取中心 五码 所有运营商的 最近一组比率")
+async def get_five_code_center_new(end_time:Optional[str] = NOW_DATE_TIME):
     """
-        获取t_603_cdr表中全部数据
-        @param:
+        ## **param**:
+            end_time:      结束时间(可选参数)    str    默认  当前时间
+        ## **@return**:
+            {
+                "imsi": {
+                        "1": {
+                                "value": 90.87,
+                                "date": "2021-03-02 14:00:00"
+                            },
+                        ...
+                        },
+                ...
+            }
+    """
+    # 开始时间： end_time 减去60分钟
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
+    db = MySqLHelper()
+    sql = """SELECT
+                imsi_cmcc_rates,
+                imsi_cucc_rates,
+                imsi_ctcc_rates,
+                msisdn_cmcc_rates,
+                msisdn_cucc_rates,
+                msisdn_ctcc_rates,
+                imei_cmcc_rates,
+                imei_cucc_rates,
+                imei_ctcc_rates,
+                areacode_cmcc_rates,
+                areacode_cucc_rates,
+                areacode_ctcc_rates,
+                uli_cmcc_rates,
+                uli_cucc_rates,
+                uli_ctcc_rates,
+                d_time 
+            FROM
+                t_603_cdr_center 
+            WHERE
+                d_time BETWEEN '{}' AND '{}' """.format(start_time, end_time)
+    print(sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = {
+        "imsi":{},
+        "msisdn":{},
+        "imei":{},
+        "areacode":{},
+        "uli":{}
+    }
+    for i in temp_data:
+        flag = 0
+        for j in result.keys():
+            for k in range(1,4):
+                t1 = result[j].setdefault(str(k),{})
+                t1['value'] = i[flag]
+                t1['date'] = i[-1]
+                flag += 1
+    return comm_ret(data = result)
+
+
+@system_603.get('/five_code/center/datas', summary = "获取中心 某码中 某运营商 的比率")
+async def get_five_code_center_datas(isp:str, code:str, start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            code:          指标码(必传参数)      str    格式  imsi
+            isp:           运营商(必传参数)      str    格式  1
             start_time:    开始时间(可选参数)    str    默认  当前时间前一天
             end_time:      结束时间(可选参数)    str    默认  当前时间
-        @return:
+        ## **return**:
+            [
+                {
+                    "rate": 92.66,
+                    "date": "2021-03-01 17:00:00"
+                },
+                ...
+            ]
+    """
+    isp_desc = {
+        '1':'cmcc',
+        '2':'cucc',
+        '3':'ctcc'
+    }
+    isp = isp_desc[isp]
+    isp_code = code + '_' + isp + '_' + 'rates'
+    db = MySqLHelper()
+    sql = """SELECT
+                {},
+                d_time 
+            FROM
+                t_603_cdr_center 
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}'""".format(isp_code, start_time, end_time)
+    print(3333,sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = []
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['rate'] = item[0]
+        temp_dict['date'] = item[1]
+        result.append(temp_dict)
+    return comm_ret(data = result)
+
+
+@system_603.get('/cdr/datas', summary = "获取t_603_cdr_chanct表中全部数据" , deprecated = True)
+async def get_cdr_datas(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)    str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)    str    默认  当前时间
+        ## **return**:
             [
                 {
                     "cdr_type": 8,
@@ -654,7 +712,7 @@ async def get_cdr_datas(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Op
                     ip_addr,
                     d_time 
                 FROM
-                    t_603_cdr
+                    t_603_cdr_chanct
                 WHERE
                     (cdr_count <> 0 
                     OR imsi_count <> 0 
@@ -682,3 +740,5 @@ async def get_cdr_datas(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Op
         temp_dict['d_time'] = item[10]
         result.append(temp_dict)
     return comm_ret(data = result)
+
+

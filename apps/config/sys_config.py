@@ -36,14 +36,15 @@ SECRET_KEY = "xxx"
 LOG_CONF = {
     'LOG_FORM_PATH': './log/runtime',  # 日志存储路径
     'LOG_RETENTION': '7 days',         # 日志存储天数
-    'LOG_LEVEL': 'INFO',               # 日志等级
+    'LOG_LEVEL': 'DEBUG',               # 日志等级
     # 'LOG_LEVEL': 'ERROR',              # 日志等级
 }
 
 # ********** 生产 与 测试 系统切换 ********** #
 # True : 生产系统
 # False: 测试系统
-isFormalSystem = False
+# isFormalSystem = False
+isFormalSystem = True
 
 # 接口前缀及版本控制
 __version = "v1.0"

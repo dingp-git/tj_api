@@ -30,12 +30,12 @@ import pymysql
 # ********** 数据库配置 ********** #
 # mysql 数据库
 MYSQL_CONF = {  # 生产系统使用
-    'DB_TEST_HOST': '127.0.0.1',
+    'DB_TEST_HOST': '10.238.249.33',
     'DB_TEST_PORT': 3306,
     'DB_TEST_DBNAME': 'tianjin',
     'DB_TEST_USER': 'root',
-    'DB_TEST_PASSWORD': '123456',
-    'DB_CHARSET': "utf8",        # 数据库连接编码
+    'DB_TEST_PASSWORD': 'root',
+    'DB_CHARSET': "utf8mb4",     # 数据库连接编码
     'DB_MIN_CACHED': 10,         # mincached : 启动时开启的闲置连接数量(缺省值 0 开始时不创建连接)
     'DB_MAX_CACHED': 10,         # maxcached : 连接池中允许的闲置的最多连接数量(缺省值 0 代表不闲置连接池大小)
     'DB_MAX_SHARED': 20,         # maxshared : 共享连接数允许的最大数量(缺省值 0 代表所有连接都是专用的)如果达到了最大数量,被请求为共享的连接将会被共享使用

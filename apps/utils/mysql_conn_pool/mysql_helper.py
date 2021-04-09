@@ -23,7 +23,7 @@
 # Standard library imports
 
 # Third party imports
-
+from loguru import logger
 # Local application imports
 from apps.utils.mysql_conn_pool.db_dbutils_init import get_my_connection
 
@@ -100,9 +100,10 @@ class MySqLHelper(object):
             res = cursor.fetchall()
             return res
         except Exception as e:
-            print(e)
-            self.close(cursor, conn)
-            return count
+            logger.error(e)
+            logger.error(e.args)
+            # self.close(cursor, conn)
+            return 0
 
     # 查询单条
     def selectone(self, sql, param=None):
@@ -113,8 +114,8 @@ class MySqLHelper(object):
             return res
         except Exception as e:
             print("error_msg:", e.args)
-            self.close(cursor, conn)
-            return count
+            # self.close(cursor, conn)
+            return 0
 
     # 增加
     def insertone(self, sql, param):
@@ -130,9 +131,9 @@ class MySqLHelper(object):
             # return _id
         except Exception as e:
             print(e)
-            conn.rollback()
-            self.close(cursor, conn)
-            return count
+            # conn.rollback()
+            # self.close(cursor, conn)
+            return 0
 
     # 增加多行
     def insertmany(self, sql, param):
@@ -141,16 +142,16 @@ class MySqLHelper(object):
         :param param: 必须是元组或列表[(),()]或（（），（））
         :return:
         """
-        cursor, conn, count = self.db.getconn()
+        cursor, conn = self.db.getconn()
         try:
-            cursor.executemany(sql, param)
+            count = cursor.executemany(sql, param)
             conn.commit()
             return count
         except Exception as e:
             print(e)
             conn.rollback()
             self.close(cursor, conn)
-            return count
+            return 0
 
     # 删除
     def delete(self, sql, param=None):
@@ -160,9 +161,9 @@ class MySqLHelper(object):
             return count
         except Exception as e:
             print(e)
-            conn.rollback()
-            self.close(cursor, conn)
-            return count
+            # conn.rollback()
+            # self.close(cursor, conn)
+            return 0
 
     # 更新
     def update(self, sql, param=None):
@@ -173,6 +174,6 @@ class MySqLHelper(object):
             return count
         except Exception as e:
             print(e)
-            conn.rollback()
-            self.close(cursor, conn)
-            return count
+            # conn.rollback()
+            # self.close(cursor, conn)
+            return 0

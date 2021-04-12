@@ -43,8 +43,8 @@ LOG_CONF = {
 # ********** 生产 与 测试 系统切换 ********** #
 # True : 生产系统
 # False: 测试系统
-# isFormalSystem = False
-isFormalSystem = True
+isFormalSystem = False
+# isFormalSystem = True
 
 # 接口前缀及版本控制
 __version = "v1.0"

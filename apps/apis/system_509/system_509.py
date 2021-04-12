@@ -332,4 +332,235 @@ async def get_row_flow_datas(ip_addr:Optional[str]=None, dev_port:Optional[str]=
     return comm_ret(data = result)
 
 
+@system_509.get('/collect_flow/new', summary = "获取天津网安监测域名采集机流量 最近一天的数据总量")
+async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            [
+                {
+                    "date": "2021-03-21 16:05:00",
+                    "ibps": 2338816,
+                    "obps": 2338816
+                },
+                ...
+            ]
+    """
+    db = MySqLHelper()
+    sql = """SELECT
+                SUM( ibps ) AS ibps,
+                SUM( obps ) AS obps,
+                d_time 
+            FROM
+                t_509_collect_flow 
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_list = data_processing(data_list, 2000)
+    result = []
+    for item in temp_list:
+        temp_dict = {}
+        temp_dict['date'] = item[2]
+        temp_dict['ibps'] = item[0]
+        temp_dict['obps'] = item[1]
+        result.append(temp_dict)
+    return comm_ret(data = result)
 
+
+@system_509.get('/collect_flow/location', summary = "获取天津网安监测域名采集机流量 以局点/运营商进行汇总数据")
+async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            {
+                "TJDX": [
+                            {
+                                "ibps": 0,
+                                "obps": 0,
+                                "date": "2021-04-06 16:30:00"
+                            },
+                            ...
+                        ]
+                ...
+            }
+    """
+    db = MySqLHelper()
+    sql = """SELECT
+                SUM( ibps ) AS ibps,
+                SUM( obps ) AS obps,
+                d_time,
+                location 
+            FROM
+                t_509_collect_flow 
+            WHERE
+                location <> 'TJFZX' 
+                AND d_time BETWEEN '{}' AND '{}' 
+            GROUP BY
+                location,
+                d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_list = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_list:
+        temp_dict = {}
+        temp_dict['ibps'] = item[0]
+        temp_dict['obps'] = item[1]
+        temp_dict['date'] = item[2]
+        if item[3] not in result.keys():
+            t1 = result.setdefault(item[3], [])
+            t1.append(temp_dict)
+        else:
+            result[item[3]].append(temp_dict)
+    return comm_ret(data = result)
+
+
+@system_509.get('/collect_flow/isp', summary = "获取天津网安监测域名采集机流量 以运营商进行汇总数据",  deprecated = True)
+async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            {
+                "1": [
+                        {
+                            "ibps": 936,
+                            "obps": 0,
+                            "date": "2021-04-07 11:00:00"
+                        },
+                        ...
+                    ]
+                ...
+            }
+    """
+    db = MySqLHelper()
+    sql = """SELECT
+                SUM( ibps ) AS ibps,
+                SUM( obps ) AS obps,
+                d_time,
+                isp 
+            FROM
+                t_509_collect_flow 
+            WHERE
+                isp <> 0 
+                AND d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                isp,
+                d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_list = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_list:
+        temp_dict = {}
+        temp_dict['ibps'] = item[0]
+        temp_dict['obps'] = item[1]
+        temp_dict['date'] = item[2]
+        if item[3] not in result.keys():
+            t1 = result.setdefault(item[3], [])
+            t1.append(temp_dict)
+        else:
+            result[item[3]].append(temp_dict)
+    return comm_ret(data = result)
+
+
+@system_509.get('/flow_monitoring/new', summary = "获取流监测流量 最近一天的数据总量")
+async def get_flow_monitoring_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            [
+                {
+                    "ibps": 5467892,
+                    "obps": 87128000,
+                    "date": "2021-04-07 11:40:00"
+                },
+                ...
+            ]
+    """
+    db = MySqLHelper()
+    sql = """SELECT
+                SUM( ibps ) AS ibps,
+                SUM( obps ) AS obps,
+                d_time 
+            FROM
+                t_509_flow_monitoring 
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_list = data_processing(data_list, 2000)
+    result = []
+    for item in temp_list:
+        temp_dict = {}
+        temp_dict['ibps'] = item[0]
+        temp_dict['obps'] = item[1]
+        temp_dict['date'] = item[2]
+        result.append(temp_dict)
+    return comm_ret(data=result)
+
+
+@system_509.get('/flow_monitoring/isp', summary = "获取流监测流量 以局点/运营商进行汇总数据")
+async def get_flow_monitoring_isp(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            {
+                "2": [
+                        {
+                            "ibps": 11722376,
+                            "obps": 0,
+                            "date": "2021-04-06 16:30:00"
+                        },
+                        ...
+                    ],
+                ...
+            }
+    """
+    db = MySqLHelper()
+    sql = """SELECT
+                SUM( ibps ) AS ibps,
+                SUM( obps ) AS obps,
+                d_time,
+                isp 
+            FROM
+                t_509_flow_monitoring 
+            WHERE
+                isp <> 0 
+                AND d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                isp,
+                d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_list = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_list:
+        temp_dict = {}
+        temp_dict['ibps'] = item[0]
+        temp_dict['obps'] = item[1]
+        temp_dict['date'] = item[2]
+        if item[3] not in result.keys():
+            t1 = result.setdefault(item[3], [])
+            t1.append(temp_dict)
+        else:
+            result[item[3]].append(temp_dict)
+    return comm_ret(data = result)

@@ -39,6 +39,11 @@ public = APIRouter()
 NOW_DATE_TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 # 当前时间减一天   "2020-11-19 22:00:00"
 BEFORE_DATE_TIME = (datetime.datetime.now()+datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
+# 当前时间  "2020-11-20"
+NOW_DATE = datetime.datetime.now().strftime("%Y-%m-%d")
+# 当前时间减一天   "2020-11-19"
+BEFORE_DATE = (datetime.datetime.now()+datetime.timedelta(days=-1)).strftime("%Y-%m-%d")
+
 
 @public.get("/")
 async def get_info():

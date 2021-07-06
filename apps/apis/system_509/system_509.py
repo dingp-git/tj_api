@@ -23,13 +23,13 @@
 # Standard library imports
 
 # Third party imports
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette.status import *
 # Local application imports
 from apps.utils import resp_code
 from apps.utils.comm_ret import comm_ret
 from apps.utils.mysql_conn_pool.mysql_helper import MySqLHelper
-from typing import Optional
+from typing import Optional, List
 from apps.apis.public.public import data_processing,BEFORE_DATE_TIME,NOW_DATE_TIME
 import datetime, time
 
@@ -274,9 +274,60 @@ async def get_loading_rate_increment(ip_port:str, start_time:Optional[str]=BEFOR
         result.append(temp_dict)
     return comm_ret(data = result)
 
+@system_509.get('/row_flow/isp_data', summary = "获取原始流量 根据各运营商进行数据分组")
+async def get_isp_data(operator:Optional[str] = None, start_time:Optional[str] = BEFORE_DATE_TIME, 
+                        end_time:Optional[str] = NOW_DATE_TIME):
+    """
+        ## **param**:
+            operator:      运营商(可选参数)        str    格式  移动
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            {
+                "电信": [
+                            {
+                                "date": "2021-03-04 14:21:00",
+                                "ibps": 0,
+                                "obps": 44912148
+                            },
+                            ...
+                        ],
+                ...
+            }
+    """
+    db = MySqLHelper()
+    sql = """
+            SELECT
+                operator,
+                d_time, 
+                SUM( ibps ),
+                SUM( obps )
+            FROM
+                `t_509_row_flow`
+            WHERE 
+                ip_addr = '10.148.255.7' AND """
+    if operator:
+        sql += "operator='{}' AND ".format(operator)
+    sql += """d_time BETWEEN '{}' AND '{}' 
+                GROUP BY operator, d_time""".format(start_time, end_time)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['date'] = item[1]
+        temp_dict['ibps'] = item[2]
+        temp_dict['obps'] = item[3]
+        if item[0] not in result.keys():
+            t1 = result.setdefault(item[0],[])
+            t1.append(temp_dict)
+        else:
+            result[item[0]].append(temp_dict)
+    return comm_ret(data = result)
 
 @system_509.get('/row_flow/datas', summary = "获取原始流量各运营商 接收和加载数据量")
-async def get_row_flow_datas(ip_addr:Optional[str]=None, dev_port:Optional[str]=None, operator:Optional[str]=None, 
+async def get_row_flow_datas(ip_addr:Optional[str] = None, operator:Optional[List[str]]=Query([]), dev_port:Optional[List[str]]=Query([]), 
                             start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
     """
         ## **param**:
@@ -298,26 +349,109 @@ async def get_row_flow_datas(ip_addr:Optional[str]=None, dev_port:Optional[str]=
                 ...
             }
     """
+    print(ip_addr, operator, dev_port, start_time, end_time)
     db = MySqLHelper()
-    sql = """SELECT
+    if ip_addr == None and len(operator) == 0 and len(dev_port) == 0:
+        sql = """
+            SELECT
+                ip_addr,
+                d_time,
+                SUM(ibps),
+                SUM(obps)
+            FROM
+                `t_509_row_flow` 
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                ip_addr, 
+                d_time
+        """.format(start_time, end_time)
+    if ip_addr != None and len(operator) == 0 and len(dev_port) == 0:
+        sql = """
+            SELECT
                 operator,
                 d_time,
-                ibps,
-                obps 
+                SUM( ibps ),
+                SUM( obps ) ,
+                ip_addr
             FROM
-                t_509_row_flow 
-            WHERE """
-    if ip_addr:
-        sql += "ip_addr='' AND ".format(ip_addr)
-    if dev_port:
-        sql += "dev_port='' AND ".format(dev_port)
-    if operator:
-        sql += "operator='' AND ".format(operator)
-    sql += "d_time BETWEEN '{}' AND '{}'".format(start_time, end_time)
-    print(sql)
+                `t_509_row_flow` 
+            WHERE
+                ip_addr = '{}' 
+                AND d_time BETWEEN '{}' 
+                AND '{}' 
+            GROUP BY
+                operator,
+                d_time
+        """.format(ip_addr, start_time, end_time)
+    sql2 = """
+        SELECT
+            dev_port,
+            d_time,
+            ibps,
+            obps,
+            ip_addr,
+            operator
+        FROM
+            `t_509_row_flow` 
+        WHERE
+    """
+    if ip_addr != None and len(operator) != 0 and len(dev_port) == 0:
+        if len(operator) == 1:
+            sql = sql2 + """
+                ip_addr = '{}' 
+                AND operator = '{}'
+                AND d_time BETWEEN '{}' 
+                AND '{}'
+            """.format(ip_addr, operator[0], start_time, end_time)
+        else:
+            sql = sql2 + """
+                ip_addr = '{}' 
+                AND operator IN {}
+                AND d_time BETWEEN '{}' 
+                AND '{}' 
+            """.format(ip_addr, tuple(operator), start_time, end_time)
+    if ip_addr != None and len(operator) != 0 and len(dev_port) != 0:
+        if len(operator) == 1:
+            if len(dev_port) == 1:
+                sql = sql2 + """
+                        ip_addr = '{}' 
+                        AND operator = '{}'
+                        AND dev_port = '{}'
+                        AND d_time BETWEEN '{}' 
+                        AND '{}' 
+                """.format(ip_addr, operator[0], dev_port[0], start_time, end_time)
+            else:
+                sql = sql2 + """
+                        ip_addr = '{}' 
+                        AND operator = '{}'
+                        AND dev_port IN {}
+                        AND d_time BETWEEN '{}' 
+                        AND '{}' 
+                """.format(ip_addr, operator[0], tuple(dev_port), start_time, end_time)
+        else:
+            if len(dev_port) == 1:
+                sql = sql2 + """
+                        ip_addr = '{}' 
+                        AND operator IN {}
+                        AND dev_port = '{}'
+                        AND d_time BETWEEN '{}' 
+                        AND '{}' 
+                """.format(ip_addr, tuple(operator), dev_port[0], start_time, end_time)
+            else:
+                sql = sql2 + """
+                        ip_addr = '{}' 
+                        AND operator IN {}
+                        AND dev_port IN {}
+                        AND d_time BETWEEN '{}' 
+                        AND '{}' 
+                """.format(ip_addr, tuple(operator), tuple(dev_port), start_time, end_time)
     rows = db.selectall(sql=sql)
+    # print(sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
+    # print(len(rows), data_list)
     result = {}
     for item in temp_data:
         temp_dict = {}
@@ -325,11 +459,11 @@ async def get_row_flow_datas(ip_addr:Optional[str]=None, dev_port:Optional[str]=
         temp_dict['ibps'] = item[2]
         temp_dict['obps'] = item[3]
         if item[0] not in result.keys():
-            t1 = result.setdefault(item[0],[])
+            t1 = result.setdefault(item[0], [])
             t1.append(temp_dict)
         else:
             result[item[0]].append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
 @system_509.get('/collect_flow/new', summary = "获取天津网安监测域名采集机流量 最近一天的数据总量")

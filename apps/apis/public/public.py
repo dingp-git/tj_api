@@ -2,7 +2,7 @@
 # @Date : 2021/3/11 0011 10:48:37
 # @Author : OldFive
 # @Version : 0.1
-# @Description : 
+# @Description :
 # @History :
 # @Other:
 #  ▒█████   ██▓    ▓█████▄   █████▒██▓ ██▒   █▓▓█████
@@ -23,8 +23,9 @@
 # Standard library imports
 
 # Third party imports
-from fastapi import APIRouter, Depends
-from starlette.status import *
+import json
+import requests
+from fastapi import APIRouter, Depends, Query
 # Local application imports
 from apps.utils import resp_code
 from apps.utils.comm_ret import comm_ret
@@ -32,25 +33,12 @@ import math
 import datetime
 from typing import Optional
 from apps.utils.mysql_conn_pool.mysql_helper import MySqLHelper
+from apps.utils.tools import data_processing, get_now_date_time, get_before_date_time
 
 public = APIRouter()
 
-# 当前时间  "2020-11-20 22:00:00"
-NOW_DATE_TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-# 当前时间减一天   "2020-11-19 22:00:00"
-BEFORE_DATE_TIME = (datetime.datetime.now()+datetime.timedelta(days=-1)).strftime("%Y-%m-%d %H:%M:%S")
-# 当前时间  "2020-11-20"
-NOW_DATE = datetime.datetime.now().strftime("%Y-%m-%d")
-# 当前时间减一天   "2020-11-19"
-BEFORE_DATE = (datetime.datetime.now()+datetime.timedelta(days=-1)).strftime("%Y-%m-%d")
-
-
-@public.get("/")
-async def get_info():
-    return comm_ret(data={'test': 'test'})
-
-@public.get('/alarm/real_time', summary = "获取系统实时告警")
-async def get_real_time_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@public.get('/alarm/real_time', summary="获取系统实时告警")
+async def get_real_time_alarm(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -71,6 +59,10 @@ async def get_real_time_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_tim
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 alarm_id,
@@ -102,11 +94,11 @@ async def get_real_time_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_tim
         temp_dict['happen_d_time'] = item[7]
         temp_dict['end_d_time'] = item[8]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@public.get('/alarm/history', summary = "获取系统历史告警")
-async def get_history_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@public.get('/alarm/history', summary="获取系统历史告警")
+async def get_history_alarm(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -127,6 +119,10 @@ async def get_history_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_time:
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 alarm_id,
@@ -158,31 +154,72 @@ async def get_history_alarm(start_time:Optional[str]=BEFORE_DATE_TIME, end_time:
         temp_dict['happen_d_time'] = item[7]
         temp_dict['end_d_time'] = item[8]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-
-def data_processing(data_list,max):
-    """
-        @param:
-            data_list:  待处理的数据列表  list
-            max:        最大数据量        int
-        @return:
-            数据列表
-    """
-    new_list = []
-    length = len(data_list)
-    if length > max:
-        num = math.ceil(length/max)
-        for i in range(0,length,num):
-            new_list.append(data_list[i])
-    else:
-        new_list = data_list
-    return new_list
-
-# ret = data_processing(data_list,30)
-# print(ret)
-
-
+@public.get('/topo/datas', summary="获取地图显示信息")
+async def get_topo_data(ip_list: Optional[list] = Query([])):
+    db = MySqLHelper()
+    if len(ip_list) == 1:
+        sql = """
+            SELECT
+                ip,
+                config,
+                crcity,
+                crlacpoint,
+                crprovince_name,
+                dfcoding,
+                dmodel_name,
+                dname,
+                dstatus_name,
+                maindept_name,
+                mperson_name,
+                rname
+            FROM
+                t_public_topo 
+            WHERE
+                ip = '{}'
+        """.format(ip_list[0])
+    else: 
+        sql = """
+            SELECT
+                ip,
+                config,
+                crcity,
+                crlacpoint,
+                crprovince_name,
+                dfcoding,
+                dmodel_name,
+                dname,
+                dstatus_name,
+                maindept_name,
+                mperson_name,
+                rname
+            FROM
+                t_public_topo 
+            WHERE
+                ip IN {}
+        """.format(tuple(ip_list))
+    # print(sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = []
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['ip'] = item[0]
+        temp_dict['config'] = item[1]
+        temp_dict['crcity'] = item[2]
+        temp_dict['crlacpoint'] = item[3]
+        temp_dict['crprovince_name'] = item[4]
+        temp_dict['dfcoding'] = item[5]
+        temp_dict['dmodel_name'] = item[6]
+        temp_dict['dname'] = item[7]
+        temp_dict['dstatus_name'] = item[8]
+        temp_dict['maindept_name'] = item[9]
+        temp_dict['mperson_name'] = item[10]
+        temp_dict['rname'] = item[11]
+        result.append(temp_dict)
+    return comm_ret(data=result)
 
 

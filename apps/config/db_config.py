@@ -46,11 +46,16 @@ MYSQL_CONF = {  # 生产系统使用
     'DB_CREATOR': pymysql,       # creator : 使用连接数据库的模块
 }
 MYSQL_CONF_T = {  # 测试系统使用
-    'DB_TEST_HOST': '172.27.1.12',
+    'DB_TEST_HOST': '1.62.188.204',
     'DB_TEST_PORT': 3306,
     'DB_TEST_DBNAME': 'tianjin',
     'DB_TEST_USER': 'root',
-    'DB_TEST_PASSWORD': 'root',
+    'DB_TEST_PASSWORD': 'Hlcert@123',
+    # 'DB_TEST_HOST': '172.27.1.12',
+    # 'DB_TEST_PORT': 3306,
+    # 'DB_TEST_DBNAME': 'tianjin',
+    # 'DB_TEST_USER': 'root',
+    # 'DB_TEST_PASSWORD': 'root',
     'DB_CHARSET': "utf8mb4",        # 数据库连接编码
     'DB_MIN_CACHED': 10,         # mincached : 启动时开启的闲置连接数量(缺省值 0 开始时不创建连接)
     'DB_MAX_CACHED': 10,         # maxcached : 连接池中允许的闲置的最多连接数量(缺省值 0 代表不闲置连接池大小)

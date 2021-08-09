@@ -2,7 +2,7 @@
 # @Date : 2021/3/11 0011 10:48:09
 # @Author : OldFive
 # @Version : 0.1
-# @Description : 
+# @Description :
 # @History :
 # @Other:
 #  ▒█████   ██▓    ▓█████▄   █████▒██▓ ██▒   █▓▓█████
@@ -30,14 +30,16 @@ from apps.utils import resp_code
 from apps.utils.comm_ret import comm_ret
 from apps.utils.mysql_conn_pool.mysql_helper import MySqLHelper
 from typing import Optional, List
-from apps.apis.public.public import data_processing,BEFORE_DATE_TIME,NOW_DATE_TIME
-import datetime, time
+from apps.utils.tools import data_processing, get_before_date_time, get_now_date_time
+import datetime
+import time
 
 
 system_509 = APIRouter()
 
-@system_509.get('/hive/new', summary = "获取hive数据库、表最近一组数据量")
-async def get_hive_new(end_time:Optional[str]=NOW_DATE_TIME):
+
+@system_509.get('/hive/new', summary="获取hive数据库、表最近一组数据量")
+async def get_hive_new(end_time: Optional[str] = None):
     """
         ## **param**:
             end_time:      结束时间(可选参数)    str    默认  当前时间
@@ -50,8 +52,11 @@ async def get_hive_new(end_time:Optional[str]=NOW_DATE_TIME):
                 ...
             }
     """
+    if end_time == None:
+        end_time = get_now_date_time()
     # 开始时间：end_time 减去 60分钟
-    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
+    start_time = datetime.datetime.strptime(
+        end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
     db = MySqLHelper()
     sql = """SELECT
                 db_desc,
@@ -74,11 +79,11 @@ async def get_hive_new(end_time:Optional[str]=NOW_DATE_TIME):
         temp_dict['value'] = item[1]
         temp_dict['date'] = item[2]
         result[item[0]] = temp_dict
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/hive/datas', summary = "获取hive中 某数据库、表的存储量")
-async def get_hive_datas(db_name:str, start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@system_509.get('/hive/datas', summary="获取hive中 某数据库、表的存储量")
+async def get_hive_datas(db_name: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             db_name:       数据库、表名(必传参数)  str    格式   dams
@@ -93,6 +98,10 @@ async def get_hive_datas(db_name:str, start_time:Optional[str]=BEFORE_DATE_TIME,
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 db_desc,
@@ -105,6 +114,7 @@ async def get_hive_datas(db_name:str, start_time:Optional[str]=BEFORE_DATE_TIME,
                 t_509_hive_db.db_id = t_509_hive_db_base.id 
                 AND db_desc = '{}' 
                 AND d_time BETWEEN '{}' AND '{}'""".format(db_name, start_time, end_time)
+    print(sql)
     rows = db.selectall(sql=sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
@@ -114,11 +124,67 @@ async def get_hive_datas(db_name:str, start_time:Optional[str]=BEFORE_DATE_TIME,
         temp_dict['value'] = item[1]
         temp_dict['date'] = item[2]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
+
+@system_509.get('/hive/data', summary="获取hive中 某数据库、表的存储量")
+async def get_hive_data(db_name: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
+    """
+        ## **param**:
+            db_name:       数据库、表名(必传参数)  list   格式   'dams, fms'
+            start_time:    开始时间(可选参数)      str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)      str    默认  当前时间
+        ## **return**:
+            [
+                {
+                    "value": 141227937372889,
+                    "date": "2021-03-21 16:00:00"
+                },
+                ...
+            ]
+    """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
+    db_name = db_name.split(',')
+    print(db_name)
+    # print(db_name2)
+    db = MySqLHelper()
+    sql = """SELECT
+                db_desc,
+                data,
+                d_time 
+            FROM
+                t_509_hive_db,
+                t_509_hive_db_base 
+            WHERE
+                t_509_hive_db.db_id = t_509_hive_db_base.id 
+                AND db_desc IN {} 
+                AND d_time BETWEEN '{}' AND '{}'""".format(tuple(db_name), start_time, end_time)
+    rows = db.selectall(sql=sql)
+    print(sql)
+    print(rows)
+    data_list = [list(row) for row in rows]
+    print(data_list)
+    temp_data = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_data:
+        if item[0] not in result.keys():
+            result[item[0]] = {}
+            value_list = []
+            date_list = []
+            value_list.append(item[1])
+            date_list.append(item[2])
+            result[item[0]]['value'] = value_list
+            result[item[0]]['date'] = date_list
+        else:
+            result[item[0]]['value'].append(item[1])
+            result[item[0]]['date'].append(item[2])
+    return comm_ret(data=result)
 
 
-@system_509.get('/hive/increment', summary = "获取hive中 某数据库、表的存储增量")
-async def get_hive_increment(db_name:str, start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@system_509.get('/hive/increment', summary="获取hive中 某数据库、表的存储增量")
+async def get_hive_increment(db_name: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             db_name:       数据库、表名(必传参数)  str    格式   dams
@@ -133,6 +199,10 @@ async def get_hive_increment(db_name:str, start_time:Optional[str]=BEFORE_DATE_T
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 db_desc,
@@ -156,11 +226,11 @@ async def get_hive_increment(db_name:str, start_time:Optional[str]=BEFORE_DATE_T
         temp_dict['increment'] = item[1]
         temp_dict['date'] = item[2]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/loading_rate/new', summary = "获取最近一组加载率数据")
-async def get_loading_rate_new(end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/loading_rate/new', summary="获取最近一组加载率数据")
+async def get_loading_rate_new(end_time: Optional[str] = None):
     """
         ## **param**:
             end_time:      结束时间(可选参数)    str    默认  当前时间
@@ -173,8 +243,11 @@ async def get_loading_rate_new(end_time:Optional[str] = NOW_DATE_TIME):
                 ...
             }
     """
+    if end_time == None:
+        end_time = get_now_date_time()
     # 开始时间：end_time 减去 5分钟
-    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-5)
+    start_time = datetime.datetime.strptime(
+        end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-5)
     db = MySqLHelper()
     sql = """SELECT
                 ip_port,
@@ -185,6 +258,7 @@ async def get_loading_rate_new(end_time:Optional[str] = NOW_DATE_TIME):
             WHERE
                 d_time BETWEEN '{}' 
                 AND '{}'""".format(start_time, end_time)
+    print(sql)
     rows = db.selectall(sql=sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
@@ -194,11 +268,11 @@ async def get_loading_rate_new(end_time:Optional[str] = NOW_DATE_TIME):
         temp_dict['date'] = item[1]
         temp_dict['value'] = item[2]
         result[item[0]] = temp_dict
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/loading_rate/datas', summary = "获取某ip_port 的加载率数据")
-async def get_loading_rate_datas(ip_port:str, start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@system_509.get('/loading_rate/datas', summary="获取某ip_port 的加载率数据")
+async def get_loading_rate_datas(ip_port: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             ip_port:       ip和端口号(必传参数)    str    格式  10.238.1.1:9100
@@ -213,6 +287,12 @@ async def get_loading_rate_datas(ip_port:str, start_time:Optional[str]=BEFORE_DA
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
+    print(ip_port, start_time, end_time)
+    print(type(ip_port), start_time, end_time)
     db = MySqLHelper()
     sql = """SELECT
                 ip_port,
@@ -233,11 +313,11 @@ async def get_loading_rate_datas(ip_port:str, start_time:Optional[str]=BEFORE_DA
         temp_dict['date'] = item[1]
         temp_dict['value'] = item[2]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/loading_rate/increment', summary = "获取某ip_port 的加载率数据增量")
-async def get_loading_rate_increment(ip_port:str, start_time:Optional[str]=BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+@system_509.get('/loading_rate/increment', summary="获取某ip_port 的加载率数据增量")
+async def get_loading_rate_increment(ip_port: str, start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             ip_port:       ip和端口号(必传参数)    str    格式  10.238.1.1:9100
@@ -252,6 +332,10 @@ async def get_loading_rate_increment(ip_port:str, start_time:Optional[str]=BEFOR
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 ip_port,
@@ -272,11 +356,12 @@ async def get_loading_rate_increment(ip_port:str, start_time:Optional[str]=BEFOR
         temp_dict['date'] = item[1]
         temp_dict['increment'] = item[2]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
-@system_509.get('/row_flow/isp_data', summary = "获取原始流量 根据各运营商进行数据分组")
-async def get_isp_data(operator:Optional[str] = None, start_time:Optional[str] = BEFORE_DATE_TIME, 
-                        end_time:Optional[str] = NOW_DATE_TIME):
+
+@system_509.get('/row_flow/isp_data', summary="获取原始流量 根据各运营商进行数据分组")
+async def get_isp_data(operator: Optional[str] = None, start_time: Optional[str] = None,
+                       end_time: Optional[str] = None):
     """
         ## **param**:
             operator:      运营商(可选参数)        str    格式  移动
@@ -295,6 +380,10 @@ async def get_isp_data(operator:Optional[str] = None, start_time:Optional[str] =
                 ...
             }
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """
             SELECT
@@ -320,15 +409,16 @@ async def get_isp_data(operator:Optional[str] = None, start_time:Optional[str] =
         temp_dict['ibps'] = item[2]
         temp_dict['obps'] = item[3]
         if item[0] not in result.keys():
-            t1 = result.setdefault(item[0],[])
+            t1 = result.setdefault(item[0], [])
             t1.append(temp_dict)
         else:
             result[item[0]].append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
-@system_509.get('/row_flow/datas', summary = "获取原始流量各运营商 接收和加载数据量")
-async def get_row_flow_datas(ip_addr:Optional[str] = None, operator:Optional[List[str]]=Query([]), dev_port:Optional[List[str]]=Query([]), 
-                            start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str]=NOW_DATE_TIME):
+
+@system_509.get('/row_flow/datas', summary="获取原始流量各运营商 接收和加载数据量")
+async def get_row_flow_datas(ip_addr: Optional[str] = None, operator: Optional[List[str]] = Query([]), dev_port: Optional[List[str]] = Query([]),
+                             start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             ip_addr:       ip地址(可选参数)        str    格式  10.148.255.7
@@ -349,6 +439,10 @@ async def get_row_flow_datas(ip_addr:Optional[str] = None, operator:Optional[Lis
                 ...
             }
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     print(ip_addr, operator, dev_port, start_time, end_time)
     db = MySqLHelper()
     if ip_addr == None and len(operator) == 0 and len(dev_port) == 0:
@@ -466,8 +560,53 @@ async def get_row_flow_datas(ip_addr:Optional[str] = None, operator:Optional[Lis
     return comm_ret(data=result)
 
 
-@system_509.get('/collect_flow/new', summary = "获取天津网安监测域名采集机流量 最近一天的数据总量")
-async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/row_flow/params', summary="获取原始流参数 数据")
+async def get_row_flow_params():
+    db = MySqLHelper()
+    sql1 = """
+            SELECT DISTINCT
+                dev_port 
+            FROM
+                t_509_row_flow 
+            WHERE
+                ip_addr = '10.148.255.7' 
+                AND operator = '电信'
+        """
+    rows = db.selectall(sql=sql1)
+    dx_data_list = [list(row)[0] for row in rows]
+    sql2 = """
+            SELECT DISTINCT
+                dev_port 
+            FROM
+                t_509_row_flow 
+            WHERE
+                ip_addr = '10.148.255.7' 
+                AND operator = '联通'
+        """
+    rows = db.selectall(sql=sql2)
+    lt_data_list = [list(row)[0] for row in rows]
+    sql3 = """
+            SELECT DISTINCT
+                dev_port 
+            FROM
+                t_509_row_flow 
+            WHERE
+                ip_addr = '10.148.255.7' 
+                AND operator = '移动'
+        """
+    rows = db.selectall(sql=sql3)
+    yd_data_list = [list(row)[0] for row in rows]
+    data_dict = {
+        'ip': '10.148.255.7',
+        '电信': dx_data_list,
+        '联通': lt_data_list,
+        '移动': yd_data_list,
+    }
+    return comm_ret(data=data_dict)
+
+
+@system_509.get('/collect_flow/new', summary="获取天津网安监测域名采集机流量 最近一天的数据总量")
+async def get_collect_flow_new(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -482,6 +621,10 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 SUM( ibps ) AS ibps,
@@ -494,6 +637,7 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
                 AND '{}' 
             GROUP BY
                 d_time""".format(start_time, end_time)
+    print(sql)
     rows = db.selectall(sql=sql)
     data_list = [list(row) for row in rows]
     temp_list = data_processing(data_list, 2000)
@@ -504,11 +648,11 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
         temp_dict['ibps'] = item[0]
         temp_dict['obps'] = item[1]
         result.append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/collect_flow/location', summary = "获取天津网安监测域名采集机流量 以局点/运营商进行汇总数据")
-async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/collect_flow/location', summary="获取天津网安监测域名采集机流量 以局点/运营商进行汇总数据")
+async def get_collect_flow_new(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -526,6 +670,10 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
                 ...
             }
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 SUM( ibps ) AS ibps,
@@ -554,11 +702,11 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
             t1.append(temp_dict)
         else:
             result[item[3]].append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/collect_flow/isp', summary = "获取天津网安监测域名采集机流量 以运营商进行汇总数据",  deprecated = True)
-async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/collect_flow/isp', summary="获取天津网安监测域名采集机流量 以运营商进行汇总数据",  deprecated=True)
+async def get_collect_flow_new(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -576,6 +724,10 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
                 ...
             }
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 SUM( ibps ) AS ibps,
@@ -605,11 +757,11 @@ async def get_collect_flow_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_
             t1.append(temp_dict)
         else:
             result[item[3]].append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)
 
 
-@system_509.get('/flow_monitoring/new', summary = "获取流监测流量 最近一天的数据总量")
-async def get_flow_monitoring_new(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/flow_monitoring/new', summary="获取流监测流量 最近一天的数据总量")
+async def get_flow_monitoring_new(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -624,6 +776,10 @@ async def get_flow_monitoring_new(start_time:Optional[str] = BEFORE_DATE_TIME, e
                 ...
             ]
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 SUM( ibps ) AS ibps,
@@ -649,8 +805,8 @@ async def get_flow_monitoring_new(start_time:Optional[str] = BEFORE_DATE_TIME, e
     return comm_ret(data=result)
 
 
-@system_509.get('/flow_monitoring/isp', summary = "获取流监测流量 以局点/运营商进行汇总数据")
-async def get_flow_monitoring_isp(start_time:Optional[str] = BEFORE_DATE_TIME, end_time:Optional[str] = NOW_DATE_TIME):
+@system_509.get('/flow_monitoring/isp', summary="获取流监测流量 以局点/运营商进行汇总数据")
+async def get_flow_monitoring_isp(start_time: Optional[str] = None, end_time: Optional[str] = None):
     """
         ## **param**:
             start_time:    开始时间(可选参数)      str    默认  当前时间前一天
@@ -668,6 +824,10 @@ async def get_flow_monitoring_isp(start_time:Optional[str] = BEFORE_DATE_TIME, e
                 ...
             }
     """
+    if start_time == None:
+        start_time = get_before_date_time()
+    if end_time == None:
+        end_time = get_now_date_time()
     db = MySqLHelper()
     sql = """SELECT
                 SUM( ibps ) AS ibps,
@@ -697,4 +857,4 @@ async def get_flow_monitoring_isp(start_time:Optional[str] = BEFORE_DATE_TIME, e
             t1.append(temp_dict)
         else:
             result[item[3]].append(temp_dict)
-    return comm_ret(data = result)
+    return comm_ret(data=result)

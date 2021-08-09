@@ -35,7 +35,7 @@ async def app_before_request(request: Request, call_next):
     # 访问日志记录 
     # (取消注释 [文件头的库导入也需打开] 则生成日志信息,但并不保存,需自行选择存储方式)
     # await sys_access_log(request)
-
+    
     # 按要求拦截请求
     path = request.url.path
     await sys_access_log(request)

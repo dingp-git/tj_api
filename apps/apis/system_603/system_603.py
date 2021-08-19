@@ -413,7 +413,8 @@ async def get_up_down_new(end_time:Optional[str] = None):
     if end_time == None:
         end_time = get_now_date_time()
     # 开始时间：end_time 减去 15分钟
-    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-15)
+    # *****************************************************
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-30)
     db = MySqLHelper()
     sql = """SELECT
                 isp,
@@ -625,7 +626,8 @@ async def get_five_code_center_new(end_time:Optional[str] = None):
     if end_time == None:
         end_time = get_now_date_time()
     # 开始时间： end_time 减去60分钟
-    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-60)
+    # **********************************************
+    start_time = datetime.datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") + datetime.timedelta(minutes=-120)
     db = MySqLHelper()
     sql = """SELECT
                 imsi_cmcc_rates,

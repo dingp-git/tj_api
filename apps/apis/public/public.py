@@ -157,50 +157,33 @@ async def get_history_alarm(start_time: Optional[str] = None, end_time: Optional
     return comm_ret(data=result)
 
 
-@public.get('/topo/datas', summary="获取地图显示信息")
-async def get_topo_data(ip_list: Optional[list] = Query([])):
+@public.get('/topo/info', summary="获取地图显示信息")
+async def get_topo_info(system_name: str, model_name: str, type: str):
     db = MySqLHelper()
-    if len(ip_list) == 1:
-        sql = """
-            SELECT
-                ip,
-                config,
-                crcity,
-                crlacpoint,
-                crprovince_name,
-                dfcoding,
-                dmodel_name,
-                dname,
-                dstatus_name,
-                maindept_name,
-                mperson_name,
-                rname
-            FROM
-                t_public_topo 
-            WHERE
-                ip = '{}'
-        """.format(ip_list[0])
-    else: 
-        sql = """
-            SELECT
-                ip,
-                config,
-                crcity,
-                crlacpoint,
-                crprovince_name,
-                dfcoding,
-                dmodel_name,
-                dname,
-                dstatus_name,
-                maindept_name,
-                mperson_name,
-                rname
-            FROM
-                t_public_topo 
-            WHERE
-                ip IN {}
-        """.format(tuple(ip_list))
-    # print(sql)
+    sql = """
+        SELECT
+            ip,
+            system_name,
+            model_name,
+            type,
+            config,
+            crcity,
+            crlacpoint,
+            crprovince_name,
+            dfcoding,
+            dmodel_name,
+            dname,
+            dstatus_name,
+            maindept_name,
+            mperson_name,
+            rname
+        FROM
+            t_public_topo
+        WHERE
+            system_name = '{}' 
+            AND model_name = '{}'
+            AND type = '{}'
+    """.format(system_name, model_name, type)
     rows = db.selectall(sql=sql)
     data_list = [list(row) for row in rows]
     temp_data = data_processing(data_list, 2000)
@@ -208,18 +191,79 @@ async def get_topo_data(ip_list: Optional[list] = Query([])):
     for item in temp_data:
         temp_dict = {}
         temp_dict['ip'] = item[0]
-        temp_dict['config'] = item[1]
-        temp_dict['crcity'] = item[2]
-        temp_dict['crlacpoint'] = item[3]
-        temp_dict['crprovince_name'] = item[4]
-        temp_dict['dfcoding'] = item[5]
-        temp_dict['dmodel_name'] = item[6]
-        temp_dict['dname'] = item[7]
-        temp_dict['dstatus_name'] = item[8]
-        temp_dict['maindept_name'] = item[9]
-        temp_dict['mperson_name'] = item[10]
-        temp_dict['rname'] = item[11]
+        temp_dict['system_name'] = item[1]
+        temp_dict['model_name'] = item[2]
+        temp_dict['type'] = item[3]
+        temp_dict['config'] = item[4]
+        temp_dict['crcity'] = item[5]
+        temp_dict['crlacpoint'] = item[6]
+        temp_dict['crprovince_name'] = item[7]
+        temp_dict['dfcoding'] = item[8]
+        temp_dict['dmodel_name'] = item[9]
+        temp_dict['dname'] = item[10]
+        temp_dict['dstatus_name'] = item[11]
+        temp_dict['maindept_name'] = item[12]
+        temp_dict['mperson_name'] = item[13]
+        temp_dict['rname'] = item[14]
         result.append(temp_dict)
     return comm_ret(data=result)
 
-
+@public.get('/topo/infos', summary="获取地图显示信息")
+async def get_topo_infos():
+    db = MySqLHelper()
+    sql = """
+        SELECT
+            ip,
+            system_name,
+            model_name,
+            type,
+            config,
+            crcity,
+            crlacpoint,
+            crprovince_name,
+            dfcoding,
+            dmodel_name,
+            dname,
+            dstatus_name,
+            maindept_name,
+            mperson_name,
+            rname
+        FROM
+            t_public_topo
+    """
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    print(temp_data)
+    result = {}
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['ip'] = item[0]
+        temp_dict['config'] = item[4]
+        temp_dict['crcity'] = item[5]
+        temp_dict['crlacpoint'] = item[6]
+        temp_dict['crprovince_name'] = item[7]
+        temp_dict['dfcoding'] = item[8]
+        temp_dict['dmodel_name'] = item[9]
+        temp_dict['dname'] = item[10]
+        temp_dict['dstatus_name'] = item[11]
+        temp_dict['maindept_name'] = item[12]
+        temp_dict['mperson_name'] = item[13]
+        temp_dict['rname'] = item[14]
+        if item[1] not in result.keys():
+            t1 = result.setdefault(item[1], {})
+            t2 = t1.setdefault(item[2], {})
+            t3 = t2.setdefault(item[3], [])
+            t3.append(temp_dict)
+        else:
+            if item[2] not in result[item[1]].keys():
+                t4 = result[item[1]].setdefault(item[2], {})
+                t5 = t4.setdefault(item[3], [])
+                t5.append(temp_dict)
+            else:
+                if item[3] not in result[item[1]][item[2]].keys():
+                    t6 =  result[item[1]][item[2]].setdefault(item[3], [])
+                    t6.append(temp_dict)
+                else:
+                    result[item[1]][item[2]][item[3]].append(temp_dict)
+    return comm_ret(data=result)

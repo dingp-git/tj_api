@@ -387,3 +387,112 @@ async def get_bc_history(start_time: Optional[str] = None, end_time: Optional[st
 # @system_ipsy.get('/proxy_ip_data', summary = "代理服务器数据是否正常入库 数据")
 
 # @system_ipsy.get('/database_produce_data', summary = "当天库表产生情况 数据")
+
+
+@system_ipsy.get('/disk_usage', summary = "系统磁盘使用情况")
+async def get_disk_usage(start_time: Optional[str] = None, end_time:Optional[str] = None,ip:Optional[str] = ''):
+    """
+        ## **param**:
+            start_time:    开始时间(可选参数)    str    默认  当前时间前一天
+            end_time:      结束时间(可选参数)    str    默认  当前时间
+            ip:            ip地址(可选参数)      str    默认  '', '10.238.183.1'(测试)
+        ## **return**:
+            {
+                "10.238.183.1": [
+                    {
+                        "usedDisk": "10",
+                        "usedDisk_data1": "10",
+                        "usedDisk_data2": "10",
+                        "usedDisk_data3": "10",
+                        "usedDisk_data4": "10",
+                        "usedDisk_data5": "10",
+                        "usedDisk_data6": "10",
+                        "usedDisk_data7": "10",
+                        "usedDisk_data8": "10",
+                        "usedDisk_data9": "10",
+                        "usedDisk_data10": "10",
+                        "usedDisk_data11": "10",
+                        "usedDisk_data12": "10",
+                        "usedDisk_data13": "10",
+                        "check_df": "10",
+                        "check_jps": "10",
+                        "check_recv": "2021-08-12 12:49:38"
+                    },
+                    ...
+                ],
+                ...
+            }
+    """
+    if start_time == None:
+        start_time = get_now_date_time()
+    if end_time == None:
+        end_time = get_before_date_time
+    db = MySqLHelper()
+    sql = """
+        SELECT
+            ip,
+            usedDisk,
+            usedDisk_data1,
+            usedDisk_data2,
+            usedDisk_data3,
+            usedDisk_data4,
+            usedDisk_data5,
+            usedDisk_data6,
+            usedDisk_data7,
+            usedDisk_data8,
+            usedDisk_data8,
+            usedDisk_data10,
+            usedDisk_data11,
+            usedDisk_data12,
+            check_df,
+            check_jps,
+            check_recv,
+            d_time 
+        FROM
+            t_ipsy_used_disk 
+    """
+    if ip:
+        sql += """
+            WHERE
+                ip = '{}'
+                AND d_time BETWEEN '{}' 
+                AND '{}'
+        """.format(ip, start_time, end_time)
+    else:
+        sql += """
+            WHERE
+                d_time BETWEEN '{}' 
+                AND '{}'
+        """.format(start_time, end_time)
+    print(sql)
+    rows = db.selectall(sql=sql)
+    data_list = [list(row) for row in rows]
+    temp_data = data_processing(data_list, 2000)
+    result = {}
+    for item in temp_data:
+        temp_dict = {}
+        temp_dict['usedDisk'] = item[1]
+        temp_dict['usedDisk_data1'] = item[2]
+        temp_dict['usedDisk_data2'] = item[3]
+        temp_dict['usedDisk_data3'] = item[4]
+        temp_dict['usedDisk_data4'] = item[5]
+        temp_dict['usedDisk_data5'] = item[6]
+        temp_dict['usedDisk_data6'] = item[7]
+        temp_dict['usedDisk_data7'] = item[8]
+        temp_dict['usedDisk_data8'] = item[8]
+        temp_dict['usedDisk_data9'] = item[10]
+        temp_dict['usedDisk_data10'] = item[11]
+        temp_dict['usedDisk_data11'] = item[12]
+        temp_dict['usedDisk_data12'] = item[13]
+        temp_dict['usedDisk_data13'] = item[14]
+        temp_dict['check_df'] = item[15]
+        temp_dict['check_jps'] = item[16]
+        temp_dict['check_recv'] = item[17]
+        if item[0] not in result.keys():
+            t1 = result.setdefault(item[0], [])
+            t1.append(temp_dict)
+        else:
+            result[item[0]].append(temp_dict)
+    return comm_ret(data=result)
+
+

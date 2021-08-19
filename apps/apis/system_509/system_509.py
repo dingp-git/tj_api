@@ -34,9 +34,7 @@ from apps.utils.tools import data_processing, get_before_date_time, get_now_date
 import datetime
 import time
 
-
 system_509 = APIRouter()
-
 
 @system_509.get('/hive/new', summary="获取hive数据库、表最近一组数据量")
 async def get_hive_new(end_time: Optional[str] = None):
